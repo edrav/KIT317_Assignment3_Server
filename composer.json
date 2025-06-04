@@ -1,0 +1,17 @@
+{
+    "name": "edraven/kit317_assignment3_server",
+    "autoload": {
+        "psr-4": {
+            "Edraven\\Kit317Assignment3Server\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "edrav",
+            "email": "eden.ravenwood@gmail.com"
+        }
+    ],
+    "require": {
+        "php-ai/php-ml": "^0.10.0"
+    }
+}
