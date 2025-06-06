@@ -16,7 +16,7 @@ foreach ($data as $row) {
     $site = (int)($row[0]);
     $date = $row[1];
     $humidity = (int)$row[2];
-    $temperature = (float)$row)[3];
+    $temperature = (float)$row[3];
     [$year, $month, $day] = explode('-', $date);
 
     if (!isset($records[$site][$date])) {               # check for existing record for the current site/date
@@ -46,4 +46,18 @@ $labels = [
     'max_temperature' => []
 ];
 
+foreach ($records as $site => $siteData) {
+    foreach ($siteData as $date => $values) {
+        $samples[] = [
+            (int)$values['month'],
+            (int)$values['day'],
+            (int)$values['site']
+        ];
+
+        $labels['min_humidity'][] = (int)$values['min_humidity'];
+        $labels['max_humidity'][] = (int)$values['max_humidity'];
+        $labels['min_temperature'][] = (float)$values['min_temperature'];
+        $labels['max_temperature'][] = (float)$values['max_temperature'];
+    }
+}
 ?>
