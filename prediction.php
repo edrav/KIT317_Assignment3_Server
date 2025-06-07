@@ -52,7 +52,9 @@ $month = $_GET['month'] ?? null;
 $dayOfMonth = $_GET['day'] ?? null;
 $site = isset($_GET['site']) ? (int)$_GET['site'] : null;
 
-if (!$month || !$dayOfMonth || !$site) {
+error_log("month=$month&day=$dayOfMonth&site=$site");
+
+if ($month === null || $dayOfMonth === null || $site === null) {
     http_response_code(400);
     exit('One or more parameters missing from URI.');
 }
