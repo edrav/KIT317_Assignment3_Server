@@ -84,7 +84,7 @@ echo "Processing $input_csv completed in " . round($end_dataProcessing - $start_
 
 
 // Split processed data into samples and labels
-echo "Identifying samples and labels";
+echo "Identifying samples and labels.\n";
 $start_sampleLabelIdentification = microtime(true);
 
 $samples = [];
@@ -130,7 +130,7 @@ dataset that was all data from the first 4 sites, and a testing dataset that was
 */
 // Randomise the order of Samples and Labels while preserving the correlation between them
 /**/
-echo "Evaluation Mode\n";
+echo "Evaluation Mode.\n";
 
 function meanAbsoluteError(array $actual, array $predicted): float {
     $n = count($actual);
@@ -151,7 +151,7 @@ function rootMeanSquareError(array $actual, array $predicted): float {
 }
 
 // shuffle samples and labels while maintaining relationship between them
-echo "Shuffling samples and labels";
+echo "Shuffling samples and labels.\n";
 $start_sampleLabelShuffling = microtime(true);
 $indices = range(0,count($samples)-1);  # produce an ordered array of all index numbers in the samples array
 shuffle($indices);                         # randomise the order of index numbers in the array of indexes
@@ -171,10 +171,10 @@ foreach ($indices as $index) {
     }
 }
 $end_sampleLabelShuffling = microtime(true);
-echo "Shuffling of samples and labels completed in " . round($end_sampleLabelShuffling, 2) - round($start_sampleLabelShuffling, 2) . " seconds.\n";
+echo "Shuffling of samples and labels completed in " . round($end_sampleLabelShuffling - $start_sampleLabelShuffling, 2) . " seconds.\n";
 
 
-echo "Splitting samples and labels into training and testing datasets";
+echo "Splitting samples and labels into training and testing datasets.\n";
 $start_splitTrainTest = microtime(true);
 $splitIndex = (int)(count($shuffledSamples) * 0.8);         # determine the index where the dataset will be split into training and test
 
@@ -206,9 +206,9 @@ $testLabels['min_temperature'] = array_slice($shuffledLabels['min_temperature'],
 $testLabels['max_temperature'] = array_slice($shuffledLabels['max_temperature'], $splitIndex);
 
 $end_splitTrainTest = microtime(true);
-echo "Splitting samples and labels into training and testing datasets completed in " . (round($end_splitTrainTest, 2)-round($start_splitTrainTest, 2)) . " seconds.\n";
+echo "Splitting samples and labels into training and testing datasets completed in " . round($end_splitTrainTest - $start_splitTrainTest, 2) . " seconds.\n";
 
-echo "Training SVR models";
+echo "Training SVR models.\n";
 $start_TrainingSVRModels = microtime(true);
 // train SVR models for each prediciton target using the training portion of the samples and labels datasets
 $svr_minHumidity = new SVR(Kernel::RBF);
@@ -219,28 +219,28 @@ $svr_maxTemperature = new SVR(Kernel::RBF);
 $start_minHTraining = microtime(true);
 $svr_minHumidity -> train($trainSamples, $trainLabels['min_humidity']);
 $end_minHTraining = microtime(true);
-echo "- Training minimum humidity model completed in " . (round($end_minHTraining, 2)-round($start_minHTraining, 2)) . " seconds.\n";
+echo "- Training minimum humidity model completed in " . round($end_minHTraining - $start_minHTraining, 2 . " seconds.\n";
 
 $start_maxHTraining = microtime(true);
 $svr_maxHumidity -> train($trainSamples, $trainLabels['max_humidity']);
 $end_maxHTraining = microtime(true);
-echo "- Training maximum humidity model completed in " . (round($end_maxHTraining, 2)-round($start_maxHTraining, 2)) . " seconds.\n";
+echo "- Training maximum humidity model completed in " . round($end_maxHTraining - $start_maxHTraining, 2) . " seconds.\n";
 
 $start_minTTraining = microtime(true);
 $svr_minTemperature -> train($trainSamples, $trainLabels['min_temperature']);
 $end_minTTraining = microtime(true);
-echo "- Training minimum temperature model completed in " . (round($end_minTTraining, 2)-round($start_minTTraining, 2)) . " seconds.\n";
+echo "- Training minimum temperature model completed in " . round($end_minTTraining - $start_minTTraining, 2) . " seconds.\n";
 
 $start_maxTTraining = microtime(true);
 $svr_maxTemperature -> train($trainSamples, $trainLabels['max_temperature']);
 $end_maxTTraining = microtime(true);
-echo "- Training maximum temperature model completed in " . (round($end_maxTTraining, 2)-round($start_maxTTraining, 2)) . " seconds.\n";
+echo "- Training maximum temperature model completed in " . round($end_maxTTraining - $start_maxTTraining, 2) . " seconds.\n";
 
 $end_TrainingSVRModels = microtime(true);
-echo "Training SVR models completed in " . (round($end_TrainingSVRModels, 2)-round($start_TrainingSVRModels, 2)) . " seconds.\n";
+echo "Training SVR models completed in " . round($end_TrainingSVRModels - $start_TrainingSVRModels, 2) . " seconds.\n";
 
 
-echo "Testing SVR models";
+echo "Testing SVR models.\n";
 $start_TestingSVRModels = microtime(true);
 $pred_minHumidity = [];
 $pred_maxHumidity = [];
