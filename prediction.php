@@ -92,6 +92,8 @@ $sample = [
     (int)matchSiteID(5, $site)
 ];
 
+putenv('TMPDIR=/tmp');
+
 $pred_minHumidity = $svr_minHumidity->predict($sample);
 $pred_maxHumidity = $svr_maxHumidity->predict($sample);
 $pred_minTemperature = $svr_minTemperature->predict($sample);
