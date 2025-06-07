@@ -5,9 +5,14 @@ use Phpml\Regression\SVR;
 use Phpml\SupportVectorMachine\Kernel;
 use Phpml\ModelManager;
 
-// turns month and day to just day of the year e.g. March 3rd becomes 31+28+3=62
-// prevents inference of relationship between the same day of each month, e.g the 10th of march and the 10th of
-// september have no specific relationship
+$input_csv = 'training_data.csv';
+
+/*
+convertToDayOfYear()
+turns month and day to just day of the year e.g. March 3rd becomes 31+28+3=62
+prevents inference of relationship between the same day of each month, e.g the 10th of march and the 10th of
+september have no specific relationship
+*/
 Function convertToDayOfYear($m, $d) {  # turns month and day to just day of the year e.g. March 3rd becomes 31+28+3=62
     $totalDays = 0;
     static $daysInMonth = [ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, ];
@@ -20,20 +25,32 @@ Function convertToDayOfYear($m, $d) {  # turns month and day to just day of the 
     return $totalDays;
 }
 
-// used to produce $sample training dataset with no numeric relationship between sites.  e.g. Site ID's are arbitrary and
-// There is nothing to be inferred from the fact that site '2' is in between sites '1' and '3' or that it is half of site '4'
+/*
+matchSiteID()
+Used to produce $sample training dataset with no numeric relationship between sites.  e.g. Site ID's are arbitrary and
+There is nothing to be inferred from the fact that site '2' is in between sites '1' and '3' or that it is half of site '4'
+ */
 Function matchSiteID($staticSite, $variableSite) {
     return $staticSite === $variableSite ? 1 : 0;
 }
 
-$input_csv = 'training_data.csv';
-$output_json = 'training_data.json';
+
+// load data
+echo "Loading $input_csv\n";
+$start_dataLoad = microtime(true);
 
 $data = array_map('str_getcsv', file($input_csv));      # load raw data
 $headers = array_map('trim', array_shift($data));       # remove header row and record column labels in separate array
 
+$end_dataLoad = microtime(true);
+echo "Loading $input_csv completed in " . round($end_dataLoad - $start_dataLoad, 2) . " seconds.\n";
 
 
+
+// process data
+
+echo "Processing $input_csv\n";
+$start_dataProcessing = microtime(true);
 
 $records = [];
 foreach ($data as $row) {
@@ -62,6 +79,13 @@ foreach ($data as $row) {
 
     }
 }
+$end_dataProcessing = microtime(true);
+echo "Processing $input_csv completed in " . round($end_dataProcessing - $start_dataProcessing, 2) . " seconds.\n";
+
+
+// Split processed data into samples and labels
+echo "Identifying samples and labels";
+$start_sampleLabelIdentification = microtime(true);
 
 $samples = [];
 $labels = [
@@ -93,12 +117,21 @@ foreach ($records as $site => $siteData) {              # loop through each site
     }
 }
 
+$end_sampleLabelIdentification = microtime(true);
+echo "Identifying samples and labels completed in " . round($end_sampleLabelIdentification - $start_sampleLabelIdentification, 2) . " seconds.\n";
+
 /*
 Evaluation mode
-in evaluation mode the sample and labels are placed in a random order and then the first 80% are used to train the model
-and the last 20% are sued to test the accuracy of the model
+in evaluation mode the sample and labels are placed in a random order.  Then the first 80% are used to train the model,
+and the last 20% are sued to test the accuracy of the model.  The randomising of the order is necessary as the source
+data is ordered, and consequently the processed data is ordered first by site and then by date.  While ordered this way,
+splitting the samples and labels into training/testing data by splitting at a specific index would result in a training
+dataset that was all data from the first 4 sites, and a testing dataset that was all from the 5th site.
 */
+// Randomise the order of Samples and Labels while preserving the correlation between them
 /**/
+echo "Evaluation Mode\n";
+
 function meanAbsoluteError(array $actual, array $predicted): float {
     $n = count($actual);
     $total = 0.0;
@@ -117,6 +150,9 @@ function rootMeanSquareError(array $actual, array $predicted): float {
     return sqrt($total / $n);
 }
 
+// shuffle samples and labels while maintaining relationship between them
+echo "Shuffling samples and labels";
+$start_sampleLabelShuffling = microtime(true);
 $indices = range(0,count($samples)-1);  # produce an ordered array of all index numbers in the samples array
 shuffle($indices);                         # randomise the order of index numbers in the array of indexes
 
@@ -134,14 +170,19 @@ foreach ($indices as $index) {
         $shuffledLabels[$label][] = $labelArray[$index];    # reorder each prediction target array in the order of the randomised indexes array
     }
 }
+$end_sampleLabelShuffling = microtime(true);
+echo "Shuffling of samples and labels completed in " . round($end_sampleLabelShuffling, 2) - round($start_sampleLabelShuffling, 2) . " seconds.\n";
 
+
+echo "Splitting samples and labels into training and testing datasets";
+$start_splitTrainTest = microtime(true);
 $splitIndex = (int)(count($shuffledSamples) * 0.8);         # determine the index where the dataset will be split into training and test
 
-// split the randomised samples array into a training portion and a testing portion
+# split the randomised samples array into a training portion and a testing portion
 $trainSamples = array_slice($shuffledSamples, 0, $splitIndex);
 $testSamples = array_slice($shuffledSamples, $splitIndex);
 
-// split the randomised labels array into a training portion and a testing portion
+# split the randomised labels array into a training portion and a testing portion
 $trainLabels = [
     'min_humidity' => [],
     'max_humidity' => [],
@@ -164,18 +205,43 @@ $testLabels['max_humidity'] = array_slice($shuffledLabels['max_humidity'], $spli
 $testLabels['min_temperature'] = array_slice($shuffledLabels['min_temperature'], $splitIndex);
 $testLabels['max_temperature'] = array_slice($shuffledLabels['max_temperature'], $splitIndex);
 
+$end_splitTrainTest = microtime(true);
+echo "Splitting samples and labels into training and testing datasets completed in " . (round($end_splitTrainTest, 2)-round($start_splitTrainTest, 2)) . " seconds.\n";
 
+echo "Training SVR models"
+$start_TrainingSVRModels = microtime(true);
 // train SVR models for each prediciton target using the training portion of the samples and labels datasets
 $svr_minHumidity = new SVR(Kernel::RBF);
 $svr_maxHumidity = new SVR(Kernel::RBF);
 $svr_minTemperature = new SVR(Kernel::RBF);
 $svr_maxTemperature = new SVR(Kernel::RBF);
 
+$start_minHTraining = microtime(true);
 $svr_minHumidity -> train($trainSamples, $trainLabels['min_humidity']);
-$svr_maxHumidity -> train($trainSamples, $trainLabels['max_humidity']);
-$svr_minTemperature -> train($trainSamples, $trainLabels['min_temperature']);
-$svr_maxTemperature -> train($trainSamples, $trainLabels['max_temperature']);
+$end_minHTraining = microtime(true);
+echo "- Training minimum humidity model completed in " . (round($end_minHTraining, 2)-round($start_minHTraining, 2)) . " seconds.\n";
 
+$start_maxHTraining = microtime(true);
+$svr_maxHumidity -> train($trainSamples, $trainLabels['max_humidity']);
+$end_maxHTraining = microtime(true);
+echo "- Training maximum humidity model completed in " . (round($end_maxHTraining, 2)-round($start_maxHTraining, 2)) . " seconds.\n";
+
+$start_minTTraining = microtime(true);
+$svr_minTemperature -> train($trainSamples, $trainLabels['min_temperature']);
+$end_minTTraining = microtime(true);
+echo "- Training minimum temperature model completed in " . (round($end_minTTraining, 2)-round($start_minTTraining, 2)) . " seconds.\n";
+
+$start_maxTTraining = microtime(true);
+$svr_maxTemperature -> train($trainSamples, $trainLabels['max_temperature']);
+$end_maxTTraining = microtime(true);
+echo "- Training maximum temperature model completed in " . (round($end_maxTTraining, 2)-round($start_maxTTraining, 2)) . " seconds.\n";
+
+$end_TrainingSVRModels = microtime(true);
+echo "Training SVR models completed in " . (round($end_TrainingSVRModels, 2)-round($start_TrainingSVRModels, 2);
+
+
+echo "Testing SVR models";
+$start_TestingSVRModels = microtime(true);
 $pred_minHumidity = [];
 $pred_maxHumidity = [];
 $pred_minTemperature = [];
@@ -187,7 +253,11 @@ for ($i = 0; $i < count($testSamples); $i++) {
     $pred_minTemperature[] = $svr_minTemperature->predict($testSamples[$i]);
     $pred_maxTemperature[] = $svr_maxTemperature->predict($testSamples[$i]);
 }
+$end_TestingSVRModels = microtime(true);
+echo "Testing SVR models completed in " . (round($end_TestingSVRModels, 2)-round($start_TestingSVRModels, 2)) . " seconds.\n";
 
+echo "Calculating error measures";
+$start_errorCalculation = microtime(true);
 $mae_minHumidity = meanAbsoluteError($testLabels['min_humidity'], $pred_minHumidity);
 $mae_maxHumidity = meanAbsoluteError($testLabels['max_humidity'], $pred_maxHumidity);
 $mae_minTemperature = meanAbsoluteError($testLabels['min_temperature'], $pred_minTemperature);
@@ -197,11 +267,14 @@ $rmse_minHumidity = rootMeanSquareError($testLabels['min_humidity'], $pred_minHu
 $rmse_maxHumidity = rootMeanSquareError($testLabels['max_humidity'], $pred_maxHumidity);
 $rmse_minTemperature = rootMeanSquareError($testLabels['min_temperature'], $pred_minTemperature);
 $rmse_maxTemperature = rootMeanSquareError($testLabels['max_temperature'], $pred_maxTemperature);
+$end_errorCalculation = microtime(true);
+echo "Calculating error measures completed in " . (round($end_errorCalculation, 2)-round($start_errorCalculation, 2)) . " seconds.\n";
 
-echo "Minimum humidity prediction error - MAE: $mae_minHumidity, RMSE: $rmse_minHumidity\n";
-echo "Maximum humidity prediction error - MAE: $mae_maxHumidity, RMSE: $rmse_maxHumidity\n";
-echo "Minimum temperature prediction error - MAE: $mae_minTemperature, RMSE: $rmse_minTemperature\n";
-echo "Maximum temperature prediction error - MAE: $mae_maxTemperature, RMSE: $rmse_maxTemperature\n";
+
+echo "Minimum humidity prediction error - MAE: ".round($mae_minHumidity, 2).", RMSE: ".round($rmse_minHumidity, 2)."\n";
+echo "Maximum humidity prediction error - MAE: ".round($mae_maxHumidity, 2).", RMSE: ".round($rmse_maxHumidity, 2)."\n";
+echo "Minimum temperature prediction error - MAE: ".round($mae_minTemperature, 2).", RMSE: ".round($rmse_minTemperature, 2)."\n";
+echo "Maximum temperature prediction error - MAE: ".round($mae_maxTemperature, 2).", RMSE: ".round($rmse_maxTemperature, 2)."\n";
 
 /**/
 
