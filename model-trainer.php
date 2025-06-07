@@ -208,7 +208,7 @@ $testLabels['max_temperature'] = array_slice($shuffledLabels['max_temperature'],
 $end_splitTrainTest = microtime(true);
 echo "Splitting samples and labels into training and testing datasets completed in " . (round($end_splitTrainTest, 2)-round($start_splitTrainTest, 2)) . " seconds.\n";
 
-echo "Training SVR models"
+echo "Training SVR models";
 $start_TrainingSVRModels = microtime(true);
 // train SVR models for each prediciton target using the training portion of the samples and labels datasets
 $svr_minHumidity = new SVR(Kernel::RBF);
@@ -237,7 +237,7 @@ $end_maxTTraining = microtime(true);
 echo "- Training maximum temperature model completed in " . (round($end_maxTTraining, 2)-round($start_maxTTraining, 2)) . " seconds.\n";
 
 $end_TrainingSVRModels = microtime(true);
-echo "Training SVR models completed in " . (round($end_TrainingSVRModels, 2)-round($start_TrainingSVRModels, 2);
+echo "Training SVR models completed in " . (round($end_TrainingSVRModels, 2)-round($start_TrainingSVRModels, 2)) . " seconds.\n";
 
 
 echo "Testing SVR models";
