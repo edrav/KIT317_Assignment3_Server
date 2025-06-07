@@ -1,9 +1,6 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
-ini_set("log_errors", 1);
-ini_set("error_log", "/tmp/php_error.log");
-
 use Phpml\Regression\SVR;
 use Phpml\SupportVectorMachine\Kernel;
 use Phpml\ModelManager;
