@@ -15,28 +15,28 @@ $svr_maxTemperature = new SVR(Kernel::RBF);
 $modelMissing = False;
 
 
-$minHumidity_file = 'minHumidity.svc';
+$minHumidity_file = 'minHumidity.svr';
 if (file_exists($minHumidity_file)) {
     $svc_minHumidity = $modelManager->restoreFromFile($minHumidity_file);
 } else {
     $modelMissing = True;
 }
 
-$maxHumidity_file = 'maxHumidity.svc';
+$maxHumidity_file = 'maxHumidity.svr';
 if (file_exists($maxHumidity_file)) {
     $svc_maxHumidity = $modelManager->restoreFromFile($maxHumidity_file);
 } else {
     $modelMissing = True;
 }
 
-$minTemperature_file = 'minTemperature.svc';
+$minTemperature_file = 'minTemperature.svr';
 if (file_exists($minTemperature_file)) {
     $svc_minTemperature = $modelManager->restoreFromFile($minTemperature_file);
 } else {
     $modelMissing = True;
 }
 
-$maxTemperature_file = 'maxTemperature.svc';
+$maxTemperature_file = 'maxTemperature.svr';
 if (file_exists($maxTemperature_file)) {
     $svc_maxTemperature = $modelManager->restoreFromFile($maxTemperature_file);
 } else {
