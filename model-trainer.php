@@ -219,7 +219,7 @@ $svr_maxTemperature = new SVR(Kernel::RBF);
 $start_minHTraining = microtime(true);
 $svr_minHumidity -> train($trainSamples, $trainLabels['min_humidity']);
 $end_minHTraining = microtime(true);
-echo "- Training minimum humidity model completed in " . round($end_minHTraining - $start_minHTraining, 2 . " seconds.\n";
+echo "- Training minimum humidity model completed in " . round($end_minHTraining - $start_minHTraining, 2) . " seconds.\n";
 
 $start_maxHTraining = microtime(true);
 $svr_maxHumidity -> train($trainSamples, $trainLabels['max_humidity']);
