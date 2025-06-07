@@ -1,7 +1,13 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
-putenv('TMPDIR=/tmp');
+// Force a safe temp directory Apache can always write to
+$forcedTemp = '/tmp/phpml-temp';
+putenv("TMPDIR=$forcedTemp");
+
+if (!file_exists($forcedTemp)) {
+    mkdir($forcedTemp, 0777, true);
+}
 
 use Phpml\Regression\SVR;
 use Phpml\SupportVectorMachine\Kernel;
