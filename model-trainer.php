@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
+/*
+php model-trainer.php --eval
+runs the trainer in evaluation mode to measure the accuracy of models
+*/
 $evaluationMode = in_array('--eval', $argv);
 
 use Phpml\SupportVectorMachine\SupportVectorMachine;
@@ -14,27 +18,23 @@ $input_csv = 'training_data.csv';
 
 // load data
 echo "Loading $input_csv\n";
-$start_dataLoad = microtime(true);
 
 $data = array_map('str_getcsv', file($input_csv));      # load raw data
 $headers = array_map('trim', array_shift($data));       # remove header row and record column labels in separate array
 
-$end_dataLoad = microtime(true);
-echo "Loading $input_csv completed in " . round($end_dataLoad - $start_dataLoad, 2) . " seconds.\n";
 
 // process data
 echo "Processing $input_csv\n";
-$start_dataProcessing = microtime(true);
 
 $records = [];
 foreach ($data as $row) {
-    # extract values from the row
+    # extract values from the row, row[2] is time which is not used in training models but is used in graph.php
     $site = (int)($row[0]);
     $date = $row[1];
     $humidity = (int)$row[3];
     $temperature = (float)$row[4];
     [$dayOfMonth, $month, $year] = explode('/', $date);
-    $dayOfYear = convertToDayOfYear($month, $dayOfMonth);
+    $dayOfYear = convertToDayOfYear($month, $dayOfMonth);  # gives date in as an integer from 1-365
 
     if (!isset($records[$site][$date])) {               # check for existing record for the current site/date
         $records[$site][$date] = [                      # create a new record if none exists
@@ -53,13 +53,9 @@ foreach ($data as $row) {
 
     }
 }
-$end_dataProcessing = microtime(true);
-echo "Processing $input_csv completed in " . round($end_dataProcessing - $start_dataProcessing, 2) . " seconds.\n";
-
 
 // Split processed data into samples and labels
 echo "Identifying samples and labels.\n";
-$start_sampleLabelIdentification = microtime(true);
 
 $samples = [];
 $labels = [
@@ -69,12 +65,11 @@ $labels = [
     'max_temperature' => []
 ];
 
-# Separate aggregated training data into samples and labels arrays
 foreach ($records as $site => $siteData) {              # loop through each site
     foreach ($siteData as $date => $values) {           # loop through the dates for each site
 
         # produces a sample record of the form [267, 0, 0, 1, 0, 0], i.e. the day of the year followed by five binary flags
-        # one for each site in the training data
+        # one for each site in the training data this prevents the model inferring a numerical relationship between sites
         $samples[] = [
             (int)$values['day_of_year'],
             (int)matchSiteID(1, $values['site']),
@@ -83,17 +78,13 @@ foreach ($records as $site => $siteData) {              # loop through each site
             (int)matchSiteID(4, $values['site']),
             (int)matchSiteID(5, $values['site'])
         ];
-                                                        # append min/max humidity/temperature values to the labels array for that predicition target
+                                                        # append min/max humidity/temperature values to the labels array for that prediction target
         $labels['min_humidity'][] = (int)$values['min_humidity'];
         $labels['max_humidity'][] = (int)$values['max_humidity'];
         $labels['min_temperature'][] = (float)$values['min_temperature'];
         $labels['max_temperature'][] = (float)$values['max_temperature'];
     }
 }
-
-$end_sampleLabelIdentification = microtime(true);
-echo "Identifying samples and labels completed in " . round($end_sampleLabelIdentification - $start_sampleLabelIdentification, 2) . " seconds.\n";
-
 
 
 if ($evaluationMode) {
@@ -106,9 +97,7 @@ if ($evaluationMode) {
     dataset that was all data from the first 4 sites, and a testing dataset that was all from the 5th site.
     */
     // Randomise the order of Samples and Labels while preserving the correlation between them
-
     echo "Evaluation Mode.\n";
-
     function meanAbsoluteError(array $actual, array $predicted): float
     {
         $n = count($actual);
@@ -131,9 +120,8 @@ if ($evaluationMode) {
 
     // shuffle samples and labels while maintaining relationship between them
     echo "Shuffling samples and labels.\n";
-    $start_sampleLabelShuffling = microtime(true);
-    $indices = range(0, count($samples) - 1);  # produce an ordered array of all index numbers in the samples array
-    shuffle($indices);                         # randomise the order of index numbers in the array of indexes
+    $indices = range(0, count($samples) - 1);       # produce an ordered array of all index numbers in the samples array
+    shuffle($indices);                              # randomise the order of index numbers in the array of indexes
 
     $shuffledSamples = [];
     $shuffledLabels = [
@@ -149,12 +137,9 @@ if ($evaluationMode) {
             $shuffledLabels[$label][] = $labelArray[$index];    # reorder each prediction target array in the order of the randomised indexes array
         }
     }
-    $end_sampleLabelShuffling = microtime(true);
-    echo "Shuffling of samples and labels completed in " . round($end_sampleLabelShuffling - $start_sampleLabelShuffling, 2) . " seconds.\n";
 
-
+    // create training and test datasets
     echo "Splitting samples and labels into training and testing datasets.\n";
-    $start_splitTrainTest = microtime(true);
     $splitIndex = (int)(count($shuffledSamples) * 0.8);         # determine the index where the dataset will be split into training and test
 
     # split the randomised samples array into a training portion and a testing portion
@@ -184,43 +169,31 @@ if ($evaluationMode) {
     $testLabels['min_temperature'] = array_slice($shuffledLabels['min_temperature'], $splitIndex);
     $testLabels['max_temperature'] = array_slice($shuffledLabels['max_temperature'], $splitIndex);
 
-    $end_splitTrainTest = microtime(true);
-    echo "Splitting samples and labels into training and testing datasets completed in " . round($end_splitTrainTest - $start_splitTrainTest, 2) . " seconds.\n";
-
-    echo "Training SVM models.\n";
-    $start_TrainingSVRModels = microtime(true);
     // train SVR models for each prediciton target using the training portion of the samples and labels datasets
+    echo "Training SVM models.\n";
     $svm_minHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_maxHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_minTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_maxTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
 
-    $start_minHTraining = microtime(true);
+    echo "- Training minimum humidity model.";
     $svm_minHumidity->train($trainSamples, $trainLabels['min_humidity']);
-    $end_minHTraining = microtime(true);
-    echo "- Training minimum humidity model completed in " . round($end_minHTraining - $start_minHTraining, 2) . " seconds.\n";
 
-    $start_maxHTraining = microtime(true);
+    echo "- Training maximum humidity model .";
     $svm_maxHumidity->train($trainSamples, $trainLabels['max_humidity']);
-    $end_maxHTraining = microtime(true);
-    echo "- Training maximum humidity model completed in " . round($end_maxHTraining - $start_maxHTraining, 2) . " seconds.\n";
 
-    $start_minTTraining = microtime(true);
+    echo "- Training minimum temperature model";
     $svm_minTemperature->train($trainSamples, $trainLabels['min_temperature']);
-    $end_minTTraining = microtime(true);
-    echo "- Training minimum temperature model completed in " . round($end_minTTraining - $start_minTTraining, 2) . " seconds.\n";
 
-    $start_maxTTraining = microtime(true);
+    echo "- Training maximum temperature model.";
     $svm_maxTemperature->train($trainSamples, $trainLabels['max_temperature']);
-    $end_maxTTraining = microtime(true);
-    echo "- Training maximum temperature model completed in " . round($end_maxTTraining - $start_maxTTraining, 2) . " seconds.\n";
-
-    $end_TrainingSVRModels = microtime(true);
-    echo "Training SVM models completed in " . round($end_TrainingSVRModels - $start_TrainingSVRModels, 2) . " seconds.\n";
 
 
+    /*
+     * arrays of predictions for each prediction target are created using the test samples and then compared against the
+     * test labels using both Mean Absolute Error and Root Mean Squared Error methods
+     */
     echo "Testing SVM models.\n";
-    $start_TestingSVRModels = microtime(true);
     $pred_minHumidity = [];
     $pred_maxHumidity = [];
     $pred_minTemperature = [];
@@ -232,11 +205,8 @@ if ($evaluationMode) {
         $pred_minTemperature[] = $svm_minTemperature->predict($testSamples[$i]);
         $pred_maxTemperature[] = $svm_maxTemperature->predict($testSamples[$i]);
     }
-    $end_TestingSVRModels = microtime(true);
-    echo "Testing SVM models completed in " . round($end_TestingSVRModels - $start_TestingSVRModels, 2) . " seconds.\n";
 
     echo "Calculating error measures.\n";
-    $start_errorCalculation = microtime(true);
     $mae_minHumidity = meanAbsoluteError($testLabels['min_humidity'], $pred_minHumidity);
     $mae_maxHumidity = meanAbsoluteError($testLabels['max_humidity'], $pred_maxHumidity);
     $mae_minTemperature = meanAbsoluteError($testLabels['min_temperature'], $pred_minTemperature);
@@ -246,8 +216,6 @@ if ($evaluationMode) {
     $rmse_maxHumidity = rootMeanSquareError($testLabels['max_humidity'], $pred_maxHumidity);
     $rmse_minTemperature = rootMeanSquareError($testLabels['min_temperature'], $pred_minTemperature);
     $rmse_maxTemperature = rootMeanSquareError($testLabels['max_temperature'], $pred_maxTemperature);
-    $end_errorCalculation = microtime(true);
-    echo "Calculating error measures completed in " . round($end_errorCalculation - $start_errorCalculation, 2) . " seconds.\n";
 
 
     echo "Minimum humidity prediction error - MAE: " . round($mae_minHumidity, 2) . ", RMSE: " . round($rmse_minHumidity, 2) . "\n";
@@ -258,6 +226,7 @@ if ($evaluationMode) {
 } else {
     // Normal mode
 
+    // if there is an existing model file this function renames it by appending the filename with a datetime string
     function archiveModelFile(string $filename): void {
         if (file_exists($filename)) {
             $timestamp = date('YmdHis');
@@ -272,36 +241,25 @@ if ($evaluationMode) {
     archiveModelFile('minTemperature.model');
     archiveModelFile('maxTemperature.model');
 
+    //train models
     $svm_minHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_maxHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_minTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_maxTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
 
-    echo "Training minimum humidity started...\n";
-    $start_minHumidity = microtime(true);
+    echo "Training minimum humidity model.\n";
     $svm_minHumidity->train($samples, $labels['min_humidity']);
     file_put_contents('minHumidity.model', $svm_minHumidity->getModel());
-    $end_minHumidity = microtime(true);
-    echo "Training minimum humidity completed in " . round($end_minHumidity - $start_minHumidity, 2) . " seconds.\n";
 
-    echo "Training maximum humidity started...\n";
-    $start_maxHumidity = microtime(true);
+    echo "Training maximum humidity model.\n";
     $svm_maxHumidity->train($samples, $labels['max_humidity']);
     file_put_contents('maxHumidity.model', $svm_maxHumidity->getModel());
-    $end_maxHumidity = microtime(true);
-    echo "Training maximum humidity completed in " . round($end_maxHumidity - $start_maxHumidity, 2) . " seconds.\n";
 
-    echo "Training minimum temperature started...\n";
-    $start_minTemperature = microtime(true);
+    echo "Training minimum temperature model.\n";
     $svm_minTemperature->train($samples, $labels['min_temperature']);
     file_put_contents('minTemperature.model', $svm_minTemperature->getModel());
-    $end_minTemperature = microtime(true);
-    echo "Training minimum temperature completed in " . round($end_minTemperature - $start_minTemperature, 2) . " seconds.\n";
 
-    echo "Training maximum temperature started...\n";
-    $start_maxTemperature = microtime(true);
+    echo "Training maximum temperature model.\n";
     $svm_maxTemperature->train($samples, $labels['max_temperature']);
     file_put_contents('maxTemperature.model', $svm_maxTemperature->getModel());
-    $end_maxTemperature = microtime(true);
-    echo "Training maximum temperature completed in " . round($end_maxTemperature - $start_maxTemperature, 2) . " seconds.\n";
 }
