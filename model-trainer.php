@@ -302,7 +302,7 @@ if ($evaluationMode) {
     echo "Training maximum temperature started...\n";
     $start_maxTemperature = microtime(true);
     $svm_maxTemperature->train($samples, $labels['max_temperature']);
-    file_put_contents('minTemperature.svr', serialize($svm_maxTemperature));
+    file_put_contents('maxTemperature.svr', serialize($svm_maxTemperature));
     $end_maxTemperature = microtime(true);
     echo "Training maximum temperature completed in " . round($end_maxTemperature - $start_maxTemperature, 2) . " seconds.\n";
 }
