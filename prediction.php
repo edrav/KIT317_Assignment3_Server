@@ -50,6 +50,10 @@ if ($modelMissing) {
     exit('One or more SVR files do not exist.');
 }
 
+foreach ([$svr_minHumidity, $svr_maxHumidity, $svr_minTemperature, $svr_maxTemperature] as $model) {
+    $model->setVarPath('/tmp/');
+}
+
 $month = $_GET['month'] ?? null;
 $dayOfMonth = $_GET['day'] ?? null;
 $site = isset($_GET['site']) ? (int)$_GET['site'] : null;
