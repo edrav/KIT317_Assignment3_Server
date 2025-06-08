@@ -1,12 +1,10 @@
 <?php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 $historicalDataFileName = 'training_data.csv';
 $predictionDataFileName = 'graph_input.json';
 
+
+// load last prediction input and response
 $predictionDataString = file_get_contents($predictionDataFileName);
 $predictionData = json_decode($predictionDataString, true);
 
@@ -21,13 +19,16 @@ $siteDayHistory = [];
 if (($handle = fopen($historicalDataFileName, 'r')) !== false) {
     $headers = fgetcsv($handle);
     $headers = array_map('trim', $headers);
+    # had to use fopen and fgetcsv as using array_map('str_getcsv', file($input_csv)); as in the model-trainer script
+    # would hit a memory limit on running php in apache.  It worked for the model-trainer as that was run from the
+    # command line
 
     while (($row = fgetcsv($handle)) !== false) {
-        $rowAssoc = array_combine($headers, $row);
-        if ((int)$rowAssoc['site'] === (int)$predictionData['site']) {
-            [$day, $month, $year] = explode('/', $rowAssoc['date']);
-            if ((int)$month === (int)$predictionData['month'] && (int)$day === (int)$predictionData['day']) {
-                [$hours, $minutes, $seconds] = explode(':', $rowAssoc['time']);
+        $rowAssoc = array_combine($headers, $row);                          # apply labels to this row data
+        if ((int)$rowAssoc['site'] === (int)$predictionData['site']) {      # is this row for the right site?
+            [$day, $month, $year] = explode('/', $rowAssoc['date']);        # then get extract the day, month, and year
+            if ((int)$month === (int)$predictionData['month'] && (int)$day === (int)$predictionData['day']) {  # is this row for the right month and day?
+                [$hours, $minutes, $seconds] = explode(':', $rowAssoc['time']);     #then process the row and place its content in an array of rows with data corresponding to the prediction input
                 $timeInMinutes = (int)$hours * 60 + (int)$minutes;
                 $siteDayHistory[] = [
                     'year' => (int)$year,
@@ -51,6 +52,8 @@ for ($i=0;$i<1440;$i=$i+30) {
     $sumHumi = 0;
     $count = 0;
 
+    #examination of the data showed that most measurements were taken at XX:00 or XX:30 but not all so average is based
+    #all the measurements that occur on the half-hour and/or in the half-hour afterward
     foreach ($siteDayHistory as $siteDay) {
         if ($siteDay['time'] >= $i and $siteDay['time'] < $i + 30) {
             $sumTemp += $siteDay['temperature'];
@@ -68,17 +71,13 @@ for ($i=0;$i<1440;$i=$i+30) {
             'averageHumidity' => round($avgHumi)
         ];
     }
-
-    $averages[] = [
-        'timeInMinutes' => $i,
-        'averageTemperature' => round($avgTemp, 1),
-        'averageHumidity' => round($avgHumi)
-    ];
 }
 
+//create a date formatted as March 3rd, September 15th, etc.
 $dateobject = DateTime::createFromFormat('!m-d', "$targetMonth-$targetDay");
 $formattedDate = $dateobject->format('F jS');
 
+//split out temperature and humidity averages and format for use with CanvasJS
 $temperatureDataPoints = [];
 $humidityDataPoints = [];
 foreach ($averages as $record) {
