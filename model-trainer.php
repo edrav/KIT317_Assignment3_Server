@@ -278,11 +278,6 @@ if ($evaluationMode) {
     $svm_minTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_maxTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
 
-    $modelManager = new ModelManager();
-
-
-
-
     echo "Training minimum humidity started...\n";
     $start_minHumidity = microtime(true);
     $svm_minHumidity->train($samples, $labels['min_humidity']);
@@ -293,21 +288,21 @@ if ($evaluationMode) {
     echo "Training maximum humidity started...\n";
     $start_maxHumidity = microtime(true);
     $svm_maxHumidity->train($samples, $labels['max_humidity']);
-    file_put_contents('minHumidity.svr', serialize($svm_maxHumidity));
+    file_put_contents('maxHumidity.svr', serialize($svm_maxHumidity));
     $end_maxHumidity = microtime(true);
     echo "Training maximum humidity completed in " . round($end_maxHumidity - $start_maxHumidity, 2) . " seconds.\n";
 
     echo "Training minimum temperature started...\n";
     $start_minTemperature = microtime(true);
     $svm_minTemperature->train($samples, $labels['min_temperature']);
-    file_put_contents('minHumidity.svr', serialize($svm_minTemperature));
+    file_put_contents('minTemperature.svr', serialize($svm_minTemperature));
     $end_minTemperature = microtime(true);
     echo "Training minimum temperature completed in " . round($end_minTemperature - $start_minTemperature, 2) . " seconds.\n";
 
     echo "Training maximum temperature started...\n";
     $start_maxTemperature = microtime(true);
     $svm_maxTemperature->train($samples, $labels['max_temperature']);
-    file_put_contents('minHumidity.svr', serialize($svm_maxTemperature));
+    file_put_contents('minTemperature.svr', serialize($svm_maxTemperature));
     $end_maxTemperature = microtime(true);
     echo "Training maximum temperature completed in " . round($end_maxTemperature - $start_maxTemperature, 2) . " seconds.\n";
 }
