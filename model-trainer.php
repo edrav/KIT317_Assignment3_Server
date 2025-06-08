@@ -176,16 +176,16 @@ if ($evaluationMode) {
     $svm_minTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_maxTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
 
-    echo "- Training minimum humidity model.";
+    echo "- Training minimum humidity model.\n";
     $svm_minHumidity->train($trainSamples, $trainLabels['min_humidity']);
 
-    echo "- Training maximum humidity model .";
+    echo "- Training maximum humidity model.\n";
     $svm_maxHumidity->train($trainSamples, $trainLabels['max_humidity']);
 
-    echo "- Training minimum temperature model";
+    echo "- Training minimum temperature model.\n";
     $svm_minTemperature->train($trainSamples, $trainLabels['min_temperature']);
 
-    echo "- Training maximum temperature model.";
+    echo "- Training maximum temperature model.\n";
     $svm_maxTemperature->train($trainSamples, $trainLabels['max_temperature']);
 
 
