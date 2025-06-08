@@ -64,7 +64,7 @@ for ($i=0;$i<1440;$i=$i+30) {
     ];
 }
 
-$dateobject = DateTime::createFromFormat('!m-d', "$month-$day");
+$dateobject = DateTime::createFromFormat('!m-d', "$targetMonth-$targetDay");
 $formattedDate = $dateobject->format('F jS');
 
 $temperatureDataPoints = [];
@@ -86,7 +86,7 @@ foreach ($averages as $record) {
 
 ?>
 
-<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>"
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 <div id="chartContainer" style="height: 300px; width: 100%;"></div>
 <script>
 var temperatureChart = new CanvasJS.Chart("temperatureChartContainer", {
@@ -98,7 +98,7 @@ var temperatureChart = new CanvasJS.Chart("temperatureChartContainer", {
     },
     axisY: {
         title: "Temperature (°C)"
-    }
+    },
     data: [{
         type: "line",
         dataPoints: <?= json_encode($temperatureDataPoints, JSON_NUMERIC_CHECK); ?>
@@ -133,7 +133,7 @@ temperatureChart.render();
         },
         axisY: {
             title: "Humidity (%)"
-        }
+        },
         data: [{
             type: "line",
             dataPoints: <?= json_encode($humidityDataPoints, JSON_NUMERIC_CHECK); ?>
