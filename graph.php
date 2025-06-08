@@ -96,7 +96,7 @@ foreach ($averages as $record) {
 <script>
 var temperatureChart = new CanvasJS.Chart("temperatureChartContainer", {
     title: {
-        text: "<?=$predictionData['prediction']['locname'] ?> - Half hourly average temperatures <?=$formattedDate ?>"
+        text: "<?=$predictionData['prediction']['locName'] ?> - Half hourly average temperatures <?=$formattedDate ?>"
     },
     axisX: {
         title: "Time (HH:mm)"
@@ -131,7 +131,7 @@ temperatureChart.render();
 <script>
     var humidityChart = new CanvasJS.Chart("humidityChartContainer", {
         title: {
-            text: "<?=$predictionData['prediction']['locname'] ?> - Half hourly average humidity <?=$formattedDate ?>"
+            text: "<?=$predictionData['prediction']['locName'] ?> - Half hourly average humidity <?=$formattedDate ?>"
         },
         axisX: {
             title: "Time (HH:mm)"
