@@ -7,10 +7,6 @@ error_reporting(E_ALL);
 $historicalDataFileName = 'training_data.csv';
 $predictionDataFileName = 'graph_input.json';
 
-// load data
-$historicalData = array_map('str_getcsv', file($historicalDataFileName));  // raw data
-$headers = array_map('trim', array_shift($historicalData));               // header row
-
 $predictionDataString = file_get_contents($predictionDataFileName);
 $predictionData = json_decode($predictionDataString, true);
 
@@ -29,7 +25,7 @@ if (($handle = fopen($historicalDataFileName, 'r')) !== false) {
     while (($row = fgetcsv($handle)) !== false) {
         $rowAssoc = array_combine($headers, $row);
         if ((int)$rowAssoc['site'] === (int)$predictionData['site']) {
-            [$year, $month, $day] = explode('-', $rowAssoc['date']);
+            [$day, $month, $year] = explode('/', $rowAssoc['date']);
             if ((int)$month === (int)$predictionData['month'] && (int)$day === (int)$predictionData['day']) {
                 [$hours, $minutes, $seconds] = explode(':', $rowAssoc['time']);
                 $timeInMinutes = (int)$hours * 60 + (int)$minutes;
