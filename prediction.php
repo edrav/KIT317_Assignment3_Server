@@ -1,19 +1,11 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
-// Force a safe temp directory Apache can always write to
-$forcedTemp = '/tmp/phpml-temp';
-putenv("TMPDIR=$forcedTemp");
-
-if (!file_exists($forcedTemp)) {
-    mkdir($forcedTemp, 0777, true);
-}
-
 use Phpml\Regression\SVR;
 use Phpml\SupportVectorMachine\Kernel;
 use Phpml\ModelManager;
 
-
+define('BASE_PATH', __DIR__);
 
 include 'functions.php';
 
@@ -25,28 +17,28 @@ $svr_maxTemperature = new SVR(Kernel::RBF);
 $modelMissing = False;
 
 
-$minHumidity_file = 'minHumidity.svr';
+$minHumidity_file = BASE_PATH . 'minHumidity.svr';
 if (file_exists($minHumidity_file)) {
     $svc_minHumidity = $modelManager->restoreFromFile($minHumidity_file);
 } else {
     $modelMissing = True;
 }
 
-$maxHumidity_file = 'maxHumidity.svr';
+$maxHumidity_file = BASE_PATH . 'maxHumidity.svr';
 if (file_exists($maxHumidity_file)) {
     $svc_maxHumidity = $modelManager->restoreFromFile($maxHumidity_file);
 } else {
     $modelMissing = True;
 }
 
-$minTemperature_file = 'minTemperature.svr';
+$minTemperature_file = BASE_PATH . 'minTemperature.svr';
 if (file_exists($minTemperature_file)) {
     $svc_minTemperature = $modelManager->restoreFromFile($minTemperature_file);
 } else {
     $modelMissing = True;
 }
 
-$maxTemperature_file = 'maxTemperature.svr';
+$maxTemperature_file = BASE_PATH . 'maxTemperature.svr';
 if (file_exists($maxTemperature_file)) {
     $svc_maxTemperature = $modelManager->restoreFromFile($maxTemperature_file);
 } else {
