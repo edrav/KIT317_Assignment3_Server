@@ -33,7 +33,7 @@ foreach ($data as $row) {
     $date = $row[1];
     $humidity = (int)$row[2];
     $temperature = (float)$row[3];
-    [$year, $month, $dayOfMonth] = explode('-', $date);
+    [$dayOfMonth, $month, $year] = explode('/', $date);
     $dayOfYear = convertToDayOfYear($month, $dayOfMonth);
 
     if (!isset($records[$site][$date])) {               # check for existing record for the current site/date
