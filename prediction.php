@@ -4,49 +4,33 @@ require_once __DIR__ . '/vendor/autoload.php';
 use Phpml\SupportVectorMachine\SupportVectorMachine;
 use Phpml\SupportVectorMachine\Type;
 use Phpml\SupportVectorMachine\Kernel;
-use Phpml\ModelManager;
 
 include 'functions.php';
 
-$modelManager = new ModelManager();
-$svr_minHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
-$svr_maxHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
-$svr_minTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
-$svr_maxTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
-$modelMissing = False;
+function loadSvmFromModelFile(string $path): ?SupportVectorMachine {
+    if (!file_exists($path)) {
+        return null;
+    }
 
+    $svm = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
+    $modelStr = file_get_contents($path);
 
-$minHumidity_file = 'minHumidity.svr';
-if (file_exists($minHumidity_file)) {
-    $svc_minHumidity = unserialize(file_get_contents($minHumidity_file));
-} else {
-    $modelMissing = True;
+    $ref = new ReflectionClass($svm);
+    $prop = $ref->getProperty('model');
+    $prop->setAccessible(true);
+    $prop->setValue($svm, $modelStr);
+
+    return $svm;
 }
 
-$maxHumidity_file = 'maxHumidity.svr';
-if (file_exists($maxHumidity_file)) {
-    $svc_maxHumidity = unserialize(file_get_contents($maxHumidity_file));
-} else {
-    $modelMissing = True;
-}
+$svr_minHumidity     = loadSvmFromModelFile('minHumidity.model');
+$svr_maxHumidity     = loadSvmFromModelFile('maxHumidity.model');
+$svr_minTemperature  = loadSvmFromModelFile('minTemperature.model');
+$svr_maxTemperature  = loadSvmFromModelFile('maxTemperature.model');
 
-$minTemperature_file = 'minTemperature.svr';
-if (file_exists($minTemperature_file)) {
-    $svc_minTemperature = unserialize(file_get_contents($minTemperature_file));
-} else {
-    $modelMissing = True;
-}
-
-$maxTemperature_file = 'maxTemperature.svr';
-if (file_exists($maxTemperature_file)) {
-    $svc_maxTemperature = unserialize(file_get_contents($maxTemperature_file));
-} else {
-    $modelMissing = True;
-}
-
-if ($modelMissing) {
+if (!$svr_minHumidity || !$svr_maxHumidity || !$svr_minTemperature || !$svr_maxTemperature) {
     http_response_code(503);
-    exit('One or more SVR files do not exist.');
+    exit('One or more model files do not exist or failed to load.');
 }
 
 $month = $_GET['month'] ?? null;
@@ -61,21 +45,11 @@ if ($month === null || $dayOfMonth === null || $site === null) {
 }
 
 switch ($site) {
-    case 1:
-        $siteName = 'Wynard';
-        break;
-    case 2:
-        $siteName = 'Launceston';
-        break;
-    case 3:
-        $siteName = 'Smithton';
-        break;
-    case 4:
-        $siteName = 'Hobart';
-        break;
-    case 5:
-        $siteName = 'Campania';
-        break;
+    case 1: $siteName = 'Wynard'; break;
+    case 2: $siteName = 'Launceston'; break;
+    case 3: $siteName = 'Smithton'; break;
+    case 4: $siteName = 'Hobart'; break;
+    case 5: $siteName = 'Campania'; break;
     default:
         http_response_code(400);
         exit('Site not found.');
@@ -108,5 +82,4 @@ $response = json_encode((object)$prediction);
 http_response_code(200);
 header('Content-type: application/json');
 echo $response;
-
 ?>

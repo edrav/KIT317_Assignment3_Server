@@ -261,17 +261,16 @@ if ($evaluationMode) {
     function archiveModelFile(string $filename): void {
         if (file_exists($filename)) {
             $timestamp = date('YmdHis');
-            $newName = preg_replace('/\.svr$/', "_$timestamp.svr", $filename);
+            $newName = preg_replace('/\.model$/', "_$timestamp.model", $filename);
             rename($filename, $newName);
             echo "Archived existing model: $filename → $newName\n";
         }
     }
 
-    archiveModelFile('minHumidity.svr');
-    archiveModelFile('maxHumidity.svr');
-    archiveModelFile('minTemperature.svr');
-    archiveModelFile('maxTemperature.svr');
-
+    archiveModelFile('minHumidity.model');
+    archiveModelFile('maxHumidity.model');
+    archiveModelFile('minTemperature.model');
+    archiveModelFile('maxTemperature.model');
 
     $svm_minHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
     $svm_maxHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
@@ -281,30 +280,28 @@ if ($evaluationMode) {
     echo "Training minimum humidity started...\n";
     $start_minHumidity = microtime(true);
     $svm_minHumidity->train($samples, $labels['min_humidity']);
-    file_put_contents('minHumidity.svr', serialize($svm_minHumidity));
+    file_put_contents('minHumidity.model', $svm_minHumidity->getModel());
     $end_minHumidity = microtime(true);
     echo "Training minimum humidity completed in " . round($end_minHumidity - $start_minHumidity, 2) . " seconds.\n";
 
     echo "Training maximum humidity started...\n";
     $start_maxHumidity = microtime(true);
     $svm_maxHumidity->train($samples, $labels['max_humidity']);
-    file_put_contents('maxHumidity.svr', serialize($svm_maxHumidity));
+    file_put_contents('maxHumidity.model', $svm_maxHumidity->getModel());
     $end_maxHumidity = microtime(true);
     echo "Training maximum humidity completed in " . round($end_maxHumidity - $start_maxHumidity, 2) . " seconds.\n";
 
     echo "Training minimum temperature started...\n";
     $start_minTemperature = microtime(true);
     $svm_minTemperature->train($samples, $labels['min_temperature']);
-    file_put_contents('minTemperature.svr', serialize($svm_minTemperature));
+    file_put_contents('minTemperature.model', $svm_minTemperature->getModel());
     $end_minTemperature = microtime(true);
     echo "Training minimum temperature completed in " . round($end_minTemperature - $start_minTemperature, 2) . " seconds.\n";
 
     echo "Training maximum temperature started...\n";
     $start_maxTemperature = microtime(true);
     $svm_maxTemperature->train($samples, $labels['max_temperature']);
-    file_put_contents('maxTemperature.svr', serialize($svm_maxTemperature));
+    file_put_contents('maxTemperature.model', $svm_maxTemperature->getModel());
     $end_maxTemperature = microtime(true);
     echo "Training maximum temperature completed in " . round($end_maxTemperature - $start_maxTemperature, 2) . " seconds.\n";
 }
-
-?>
