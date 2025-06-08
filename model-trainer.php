@@ -286,28 +286,28 @@ if ($evaluationMode) {
     echo "Training minimum humidity started...\n";
     $start_minHumidity = microtime(true);
     $svm_minHumidity->train($samples, $labels['min_humidity']);
-    $modelManager->saveToFile($svm_minHumidity, 'minHumidity.svm');
+    file_put_contents('minHumidity.svr', serialize($svm_minHumidity));
     $end_minHumidity = microtime(true);
     echo "Training minimum humidity completed in " . round($end_minHumidity - $start_minHumidity, 2) . " seconds.\n";
 
     echo "Training maximum humidity started...\n";
     $start_maxHumidity = microtime(true);
     $svm_maxHumidity->train($samples, $labels['max_humidity']);
-    $modelManager->saveToFile($svm_maxHumidity, 'maxHumidity.svm');
+    file_put_contents('minHumidity.svr', serialize($svm_maxHumidity));
     $end_maxHumidity = microtime(true);
     echo "Training maximum humidity completed in " . round($end_maxHumidity - $start_maxHumidity, 2) . " seconds.\n";
 
     echo "Training minimum temperature started...\n";
     $start_minTemperature = microtime(true);
     $svm_minTemperature->train($samples, $labels['min_temperature']);
-    $modelManager->saveToFile($svm_minTemperature, 'minTemperature.svm');
+    file_put_contents('minHumidity.svr', serialize($svm_minTemperature));
     $end_minTemperature = microtime(true);
     echo "Training minimum temperature completed in " . round($end_minTemperature - $start_minTemperature, 2) . " seconds.\n";
 
     echo "Training maximum temperature started...\n";
     $start_maxTemperature = microtime(true);
     $svm_maxTemperature->train($samples, $labels['max_temperature']);
-    $modelManager->saveToFile($svm_maxTemperature, 'maxTemperature.svm');
+    file_put_contents('minHumidity.svr', serialize($svm_maxTemperature));
     $end_maxTemperature = microtime(true);
     echo "Training maximum temperature completed in " . round($end_maxTemperature - $start_maxTemperature, 2) . " seconds.\n";
 }
