@@ -87,7 +87,7 @@ $graphInfo = [
 
 $graphJSON = json_encode($graphInfo, JSON_PRETTY_PRINT);
 
-file_put_contents('prediction.json', $graphJSON);
+file_put_contents('graph_input.json', $graphJSON);
 
 $response = json_encode((object)$prediction);
 http_response_code(200);
