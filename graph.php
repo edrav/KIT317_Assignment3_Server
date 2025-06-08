@@ -59,8 +59,15 @@ for ($i=0;$i<1440;$i=$i+30) {
         }
     }
 
-    $avgTemp = $sumTemp / $count;
-    $avgHumi = $sumHumi / $count;
+    if ($count > 0) {
+        $avgTemp = $sumTemp / $count;
+        $avgHumi = $sumHumi / $count;
+        $averages[] = [
+            'timeInMinutes' => $i,
+            'averageTemperature' => round($avgTemp, 1),
+            'averageHumidity' => round($avgHumi)
+        ];
+    }
 
     $averages[] = [
         'timeInMinutes' => $i,
@@ -77,7 +84,7 @@ $humidityDataPoints = [];
 foreach ($averages as $record) {
     $timeInMinutes = $record['timeInMinutes'];
     $hours = floor($timeInMinutes / 60);
-    $minutes = $minutes % 60;
+    $minutes = $timeInMinutes % 60;
     $label = sprintf('%02d:%02d', $hours, $minutes);
     $temperatureDataPoints[] = [
         'label' => $label,
@@ -92,7 +99,7 @@ foreach ($averages as $record) {
 ?>
 
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
-<div id="chartContainer" style="height: 300px; width: 100%;"></div>
+<div id="temperatureChartContainer" style="height: 300px; width: 100%;"></div>
 <script>
 var temperatureChart = new CanvasJS.Chart("temperatureChartContainer", {
     title: {
