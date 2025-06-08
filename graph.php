@@ -22,25 +22,29 @@ $targetSite = $predictionData['site'];
 // Filter data matching site/month/day
 $siteDayHistory = [];
 
-foreach ($historicalData as $row) {
-    $rowAssoc = array_combine($headers, $row);  // convert indexed row to assoc using headers
+if (($handle = fopen($historicalDataFileName, 'r')) !== false) {
+    $headers = fgetcsv($handle);
+    $headers = array_map('trim', $headers);
 
-    if ((int)$rowAssoc['site'] === (int)$targetSite) {
-        [$year, $month, $day] = explode('-', $rowAssoc['date']);
-        if ((int)$month === (int)$targetMonth && (int)$day === (int)$targetDay) {
-
-            [$hours, $minutes, $seconds] = explode(':', $rowAssoc['time']);
-            $timeInMinutes = (int)$hours * 60 + (int)$minutes;
-            $siteDayHistory[] = [
-                'year' => (int)$year,
-                'month' => (int)$month,
-                'day' => (int)$day,
-                'time' => $timeInMinutes,
-                'temperature' => (float)$rowAssoc['temperature'],
-                'humidity' => (int)$rowAssoc['humidity']
-            ];
+    while (($row = fgetcsv($handle)) !== false) {
+        $rowAssoc = array_combine($headers, $row);
+        if ((int)$rowAssoc['site'] === (int)$predictionData['site']) {
+            [$year, $month, $day] = explode('-', $rowAssoc['date']);
+            if ((int)$month === (int)$predictionData['month'] && (int)$day === (int)$predictionData['day']) {
+                [$hours, $minutes, $seconds] = explode(':', $rowAssoc['time']);
+                $timeInMinutes = (int)$hours * 60 + (int)$minutes;
+                $siteDayHistory[] = [
+                    'year' => (int)$year,
+                    'month' => (int)$month,
+                    'day' => (int)$day,
+                    'time' => $timeInMinutes,
+                    'temperature' => (float)$rowAssoc['temperature'],
+                    'humidity' => (int)$rowAssoc['humidity']
+                ];
+            }
         }
     }
+    fclose($handle);
 }
 
 //Calculate half hourly averages
