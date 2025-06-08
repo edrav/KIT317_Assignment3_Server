@@ -18,28 +18,28 @@ $modelMissing = False;
 
 $minHumidity_file = 'minHumidity.svr';
 if (file_exists($minHumidity_file)) {
-    $svc_minHumidity = $modelManager->restoreFromFile($minHumidity_file);
+    $svc_minHumidity = unserialize(file_get_contents($minHumidity_file));
 } else {
     $modelMissing = True;
 }
 
 $maxHumidity_file = 'maxHumidity.svr';
 if (file_exists($maxHumidity_file)) {
-    $svc_maxHumidity = $modelManager->restoreFromFile($maxHumidity_file);
+    $svc_maxHumidity = unserialize(file_get_contents($maxHumidity_file));
 } else {
     $modelMissing = True;
 }
 
 $minTemperature_file = 'minTemperature.svr';
 if (file_exists($minTemperature_file)) {
-    $svc_minTemperature = $modelManager->restoreFromFile($minTemperature_file);
+    $svc_minTemperature = unserialize(file_get_contents($minTemperature_file));
 } else {
     $modelMissing = True;
 }
 
 $maxTemperature_file = 'maxTemperature.svr';
 if (file_exists($maxTemperature_file)) {
-    $svc_maxTemperature = $modelManager->restoreFromFile($maxTemperature_file);
+    $svc_maxTemperature = unserialize(file_get_contents($maxTemperature_file));
 } else {
     $modelMissing = True;
 }
