@@ -88,11 +88,11 @@ foreach ($averages as $record) {
     $label = sprintf('%02d:%02d', $hours, $minutes);
     $temperatureDataPoints[] = [
         'label' => $label,
-        'temperature' => $record['averageTemperature'],
+        'y' => $record['averageTemperature'],
     ];
     $humidityDataPoints[] = [
         'label' => $label,
-        'humidity' => $record['averageHumidity'],
+        'y' => $record['averageHumidity'],
     ];
 }
 
