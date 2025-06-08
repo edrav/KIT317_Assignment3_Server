@@ -78,6 +78,17 @@ $prediction = [
     'locName' => $siteName
 ];
 
+$graphInfo = [
+    'month' => $month,
+    'day' => $dayOfMonth,
+    'site' => $site,
+    'prediction' => $prediction
+];
+
+$graphJSON = json_encode($graphInfo, JSON_PRETTY_PRINT);
+
+file_put_contents('prediction.json', $graphJSON);
+
 $response = json_encode((object)$prediction);
 http_response_code(200);
 header('Content-type: application/json');
