@@ -1,44 +1,43 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
 
-use Phpml\Regression\SVR;
+use Phpml\SupportVectorMachine\SupportVectorMachine;
+use Phpml\SupportVectorMachine\Type;
 use Phpml\SupportVectorMachine\Kernel;
 use Phpml\ModelManager;
-
-define('BASE_PATH', __DIR__);
 
 include 'functions.php';
 
 $modelManager = new ModelManager();
-$svr_minHumidity = new SVR(Kernel::RBF);
-$svr_maxHumidity = new SVR(Kernel::RBF);
-$svr_minTemperature = new SVR(Kernel::RBF);
-$svr_maxTemperature = new SVR(Kernel::RBF);
+$svr_minHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
+$svr_maxHumidity = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
+$svr_minTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
+$svr_maxTemperature = new SupportVectorMachine(Type::EPSILON_SVR, Kernel::RBF);
 $modelMissing = False;
 
 
-$minHumidity_file = BASE_PATH . '/minHumidity.svr';
+$minHumidity_file = 'minHumidity.svr';
 if (file_exists($minHumidity_file)) {
     $svc_minHumidity = $modelManager->restoreFromFile($minHumidity_file);
 } else {
     $modelMissing = True;
 }
 
-$maxHumidity_file = BASE_PATH . '/maxHumidity.svr';
+$maxHumidity_file = 'maxHumidity.svr';
 if (file_exists($maxHumidity_file)) {
     $svc_maxHumidity = $modelManager->restoreFromFile($maxHumidity_file);
 } else {
     $modelMissing = True;
 }
 
-$minTemperature_file = BASE_PATH . '/minTemperature.svr';
+$minTemperature_file = 'minTemperature.svr';
 if (file_exists($minTemperature_file)) {
     $svc_minTemperature = $modelManager->restoreFromFile($minTemperature_file);
 } else {
     $modelMissing = True;
 }
 
-$maxTemperature_file = BASE_PATH . '/maxTemperature.svr';
+$maxTemperature_file = 'maxTemperature.svr';
 if (file_exists($maxTemperature_file)) {
     $svc_maxTemperature = $modelManager->restoreFromFile($maxTemperature_file);
 } else {
@@ -48,10 +47,6 @@ if (file_exists($maxTemperature_file)) {
 if ($modelMissing) {
     http_response_code(503);
     exit('One or more SVR files do not exist.');
-}
-
-foreach ([$svr_minHumidity, $svr_maxHumidity, $svr_minTemperature, $svr_maxTemperature] as $model) {
-    $model->setVarPath('/tmp/');
 }
 
 $month = $_GET['month'] ?? null;
