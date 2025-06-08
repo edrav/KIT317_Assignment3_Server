@@ -71,10 +71,10 @@ $pred_minTemperature = $svr_minTemperature->predict($sample);
 $pred_maxTemperature = $svr_maxTemperature->predict($sample);
 
 $prediction = [
-    'minTemp' => $pred_minTemperature,
-    'maxTemp' => $pred_maxTemperature,
-    'minHumi' => $pred_minHumidity,
-    'maxHumi' => $pred_maxHumidity,
+    'minTemp' => round($pred_minTemperature, 1),
+    'maxTemp' => round($pred_maxTemperature, 1),
+    'minHumi' => round($pred_minHumidity),
+    'maxHumi' => round($pred_maxHumidity),
     'locName' => $siteName
 ];
 
