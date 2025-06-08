@@ -31,8 +31,8 @@ foreach ($data as $row) {
     # extract values from the row
     $site = (int)($row[0]);
     $date = $row[1];
-    $humidity = (int)$row[2];
-    $temperature = (float)$row[3];
+    $humidity = (int)$row[3];
+    $temperature = (float)$row[4];
     [$dayOfMonth, $month, $year] = explode('/', $date);
     $dayOfYear = convertToDayOfYear($month, $dayOfMonth);
 
